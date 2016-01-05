@@ -47,9 +47,9 @@ extern "C" {
 #include "Arduino.h"
 #include "WiShield.h"
 
-boolean WiShield::init(U8 seconds)
+bool WiShield::init(U8 seconds)
 {
-	boolean retVal = false;
+	bool retVal = false;
 	zg_init();
 
 #ifdef USE_DIG0_INTR

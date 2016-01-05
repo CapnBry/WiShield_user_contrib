@@ -42,12 +42,12 @@ extern U8 local_ip[];
 extern U8 gateway_ip[];
 extern U8 subnet_mask[];
 extern char ssid[];
-extern const prog_char security_data[];
+extern const char PROGMEM security_data[];
 extern U8 security_type;
 extern U8 wireless_mode;
 
-extern const prog_char webpage[];
-extern const prog_char twitter[];
+extern const char PROGMEM webpage[];
+extern const char PROGMEM twitter[];
 extern unsigned char mfg_id[4];
 
 #define WIRELESS_MODE_INFRA	1

@@ -44,8 +44,8 @@
 // DEBUG adds connection info out the Serial port
 // If DEBUG_VERBOSE is defined, additional more technical information is sent as well
 // Warning: this increases RAM usage and code size and will slow execution speed
-//#define DEBUG
-//#define DEBUG_VERBOSE
+#define DEBUG
+#define DEBUG_VERBOSE
 
 
 // Declare the server's uip callback function
