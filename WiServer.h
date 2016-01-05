@@ -101,6 +101,16 @@ class GETrequest
 		void setAuth(char* auth);
 
 		/*
+		 * Sets the IP
+		 */
+		void setIP(uint8* ipAddr);
+
+		/*
+		 * Sets the uIP
+		 */
+		void setuIP(uint16* ipAddr);
+
+		/*
 		 * Checks if this request is currently being processed by the WiServer (i.e. it is awaiting a connection
 		 * or is currently connected and communicating with the server).  If it is, any calls that attempt
 		 * to change the properties of the request will be ignored.

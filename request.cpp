@@ -28,7 +28,7 @@
  
  
  *****************************************************************************/
-
+#include "Arduino.h"
 #include "WiServer.h"
 
 #ifdef ENABLE_CLIENT_MODE
@@ -63,6 +63,31 @@ void GETrequest::setReturnFunc(returnFunction func) {
 
 void GETrequest::setAuth(char* auth) {
 	if (!this->active) this->auth = auth;
+}
+
+void GETrequest::setIP(uint8* ipAddr) {
+	if (!this->active) {	
+		// Store IP address using the uIP type
+		uip_ipaddr(this->ipAddr, ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3]);
+	}
+}
+
+void GETrequest::setuIP(uint16* ipAddr) {
+	if (!this->active) {
+		this->ipAddr[0] = ipAddr[0];
+		this->ipAddr[1] = ipAddr[1];
+
+#ifdef DEBUG
+		Serial.print(F("DNS ADDR RECEIVED: "));
+		Serial.print(uip_ipaddr1(this->ipAddr));
+		Serial.print(F("."));
+		Serial.print(uip_ipaddr2(this->ipAddr));
+		Serial.print(F("."));
+		Serial.print(uip_ipaddr3(this->ipAddr));
+		Serial.print(F("."));
+		Serial.println(uip_ipaddr4(this->ipAddr));
+#endif
+	}
 }
 
 void GETrequest::setURL(char* URL) {
