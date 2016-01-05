@@ -139,19 +139,8 @@ extern "C" {
       dnsCalledBack = true;
       
       if(NULL != ipaddr) {
-         // TODO: probably a better way to do this...
-         ip[0] = uip_ipaddr1(ipaddr);
-         ip[1] = uip_ipaddr2(ipaddr);
-         ip[2] = uip_ipaddr3(ipaddr);
-         ip[3] = uip_ipaddr4(ipaddr);
-         Serial.print("DNS ADDR RECEIVED: "); 
-         Serial.print(ip[0], DEC);
-         Serial.print(".");
-         Serial.print(ip[1], DEC);
-         Serial.print(".");
-         Serial.print(ip[2], DEC);
-         Serial.print(".");
-         Serial.println(ip[3], DEC);
+        // set the fetched ip
+        getWeather.setuIP(ipaddr);
       }
       else {
          Serial.println("DNS NULL - FALLBACK TO DEFAULT IP ADDRESS");
