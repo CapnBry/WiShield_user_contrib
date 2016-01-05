@@ -57,9 +57,14 @@ extern "C" {
 typedef void (*returnFunction)(char* data, int len);
 
 /*
+ * Function for handling timeout
+ */
+typedef void (*timeoutFunction)();
+
+/*
  * Function for serving web pages
  */
-typedef boolean (*pageServingFunction)(char* URL);
+typedef bool (*pageServingFunction)(char* URL);
 
 /*
  * Function for providing the body of a POST request
@@ -95,17 +100,32 @@ class GETrequest
 		void setReturnFunc(returnFunction func);
 
 		/*
+		 * Sets the function that should be called with request timedout.
+		 */
+		void setTimeoutFunc(timeoutFunction func);
+
+		/*
 		 * Sets the authorization string for the request.  Calls to this method will be ignored if the request
 		 * has been submitted and is still being processed by WiServer.
 		 */
 		void setAuth(char* auth);
 
 		/*
+		 * Sets the IP
+		 */
+		void setIP(uint8* ipAddr);
+
+		/*
+		 * Sets the uIP
+		 */
+		void setuIP(uint16* ipAddr);
+
+		/*
 		 * Checks if this request is currently being processed by the WiServer (i.e. it is awaiting a connection
 		 * or is currently connected and communicating with the server).  If it is, any calls that attempt
 		 * to change the properties of the request will be ignored.
 		 */
-		boolean isActive();
+		bool isActive();
 
 		/*
 		 * Sets the URL for the request.  Calls to this method will be ignored if the request
@@ -125,8 +145,12 @@ class GETrequest
 	    char* auth;
 	    // Return value callback function (may be NULL)
 		returnFunction returnFunc;
+		// Timeout callback function (may be NULL)
+		timeoutFunction timeoutFunc;
+		// Timeout timer
+		uint8_t timer;
 	    // Indicates if the request is currently active (i.e. has a connection)
-		boolean active;
+		bool active;
 	    // Body data callback function (may be NULL)
 	    bodyFunction body;
 	    // Body preamble (may be NULL)
@@ -219,7 +243,7 @@ class Server: public Print
 		 * in the network.  Changes to the content of the page should only be made if this method
 		 * returns false.
 		 */
-		boolean sendInProgress();
+		bool sendInProgress();
 
 		/**
 		 * Checks if the client for the current server request resides on the same local network
@@ -234,7 +258,7 @@ class Server: public Print
 		 * Note that security checks based on the client IP address are not 100% reliable,
 		 * so this feature should not be relied upon to control access to sensitive data!
 		 */
-		boolean clientIsLocal();
+		bool clientIsLocal();
 
 		/**
 		 * Sets the pins used to indicate TX and RX activity over the network.

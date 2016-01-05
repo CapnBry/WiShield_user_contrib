@@ -55,20 +55,23 @@ extern "C" {
 #define CR 13
 #define LF 10
 
+// Request timeout value (about 30secs)
+#define WEBCLIENT_TIMEOUT 60
+
 // Strings stored in program memory (defined in strings.c)
-extern const prog_char httpGET[];
-extern const prog_char httpOK[];
-extern const prog_char httpNotFound[];
-extern const prog_char http10[];
-extern const prog_char post[];
-extern const prog_char get[];
-extern const prog_char authBasic[];
-extern const prog_char host[];
-extern const prog_char userAgent[];
-extern const prog_char contentTypeForm[];
-extern const prog_char contentLength[];
-extern const prog_char status[];
-extern const prog_char base64Chars[];
+extern const char PROGMEM httpGET[];
+extern const char PROGMEM httpOK[];
+extern const char PROGMEM httpNotFound[];
+extern const char PROGMEM http10[];
+extern const char PROGMEM post[];
+extern const char PROGMEM get[];
+extern const char PROGMEM authBasic[];
+extern const char PROGMEM host[];
+extern const char PROGMEM userAgent[];
+extern const char PROGMEM contentTypeForm[];
+extern const char PROGMEM contentLength[];
+extern const char PROGMEM status[];
+extern const char PROGMEM base64Chars[];
 
 
 /* GregEigsti - jrwifi submitted WiServer stability fix */
@@ -309,7 +312,7 @@ boolean processLine(char* data, int len) {
  * This function looks for CR/LF (or just LF) and calls processLine
  * with each line of data found.
  */
-boolean processPacket(char* data, int len) {
+bool processPacket(char* data, int len) {
 
 	// Address after the last byte of data
 	char* end = data + len;
@@ -371,12 +374,12 @@ void sendPage() {
 }
 
 
-boolean Server::sendInProgress() {
+bool Server::sendInProgress() {
 	return false; // FIX ME
 }
 
 
-boolean Server::clientIsLocal() {
+bool Server::clientIsLocal() {
 	// Check if there is a current connection
 	if (uip_conn != NULL) {
 		// Check if the remote host is local to the server
@@ -584,12 +587,18 @@ void client_task_impl() {
 		Serial.print("Connected to ");
 		Serial.println(req->hostName);
 #endif // DEBUG
+		// Set to zero Timeout timer
+		req->timer = 0;
+
 		app->ackedCount = 0;
 		sendRequest();
 	}
 
 	// Did we get an ack for the last packet?
 	if (uip_acked()) {
+		// Set to zero Timeout timer
+		req->timer = 0;
+
 		// Record the bytes that were successfully sent
 		app->ackedCount += app->sentCount;
 		app->sentCount = 0;
@@ -609,6 +618,9 @@ void client_task_impl() {
  	if (uip_newdata())  {
  		setRXPin(HIGH);
 
+ 		// Set to zero Timeout timer
+		req->timer = 0;
+
 #ifdef DEBUG
 		Serial.print("RX ");
 		Serial.print(uip_datalen());
@@ -622,8 +634,28 @@ void client_task_impl() {
 	 	}
  	}
 
+ 	if (uip_rexmit() || uip_newdata() || uip_acked()) {
+		//do nothing
+	} else if(uip_poll()) {
+		req->timer++;
+		if(req->timer == WEBCLIENT_TIMEOUT) {
+#ifdef DEBUG
+				Serial.print(F("Connection timedout with "));
+				Serial.println(req->hostName);
+#endif // DEBUG
+			if (req->timeoutFunc) {
+				// Call the sketch's callback timeout function
+				req->timeoutFunc();
+			}
+			// Abort the request
+			uip_abort();
+		}
+	}
+
 	if (uip_aborted() || uip_timedout() || uip_closed()) {
 		if (req != NULL) {
+			// TODO: Set to zero Timeout timer maybe necessary here
+			//req->timer = 0;
 #ifdef DEBUG
 			Serial.print("Ended connection with ");
 			Serial.println(req->hostName);
