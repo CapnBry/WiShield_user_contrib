@@ -55,6 +55,9 @@ extern "C" {
 #define CR 13
 #define LF 10
 
+// Request timeout value (about 30secs)
+#define WEBCLIENT_TIMEOUT 60
+
 // Strings stored in program memory (defined in strings.c)
 extern const char PROGMEM httpGET[];
 extern const char PROGMEM httpOK[];
@@ -584,12 +587,18 @@ void client_task_impl() {
 		Serial.print("Connected to ");
 		Serial.println(req->hostName);
 #endif // DEBUG
+		// Set to zero Timeout timer
+		req->timer = 0;
+
 		app->ackedCount = 0;
 		sendRequest();
 	}
 
 	// Did we get an ack for the last packet?
 	if (uip_acked()) {
+		// Set to zero Timeout timer
+		req->timer = 0;
+
 		// Record the bytes that were successfully sent
 		app->ackedCount += app->sentCount;
 		app->sentCount = 0;
@@ -609,6 +618,9 @@ void client_task_impl() {
  	if (uip_newdata())  {
  		setRXPin(HIGH);
 
+ 		// Set to zero Timeout timer
+		req->timer = 0;
+
 #ifdef DEBUG
 		Serial.print("RX ");
 		Serial.print(uip_datalen());
@@ -622,8 +634,28 @@ void client_task_impl() {
 	 	}
  	}
 
+ 	if (uip_rexmit() || uip_newdata() || uip_acked()) {
+		//do nothing
+	} else if(uip_poll()) {
+		req->timer++;
+		if(req->timer == WEBCLIENT_TIMEOUT) {
+#ifdef DEBUG
+				Serial.print(F("Connection timedout with "));
+				Serial.println(req->hostName);
+#endif // DEBUG
+			if (req->timeoutFunc) {
+				// Call the sketch's callback timeout function
+				req->timeoutFunc();
+			}
+			// Abort the request
+			uip_abort();
+		}
+	}
+
 	if (uip_aborted() || uip_timedout() || uip_closed()) {
 		if (req != NULL) {
+			// TODO: Set to zero Timeout timer maybe necessary here
+			//req->timer = 0;
 #ifdef DEBUG
 			Serial.print("Ended connection with ");
 			Serial.println(req->hostName);

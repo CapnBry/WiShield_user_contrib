@@ -71,6 +71,7 @@ void setup() {
 
   // Have the processData function called when data is returned by the server
   getWeather.setReturnFunc(printData);
+  getWeather.setTimeoutFunc(requestTimedout);
 }
 
 
@@ -90,4 +91,9 @@ void loop(){
   WiServer.server_task();
  
   delay(10);
+}
+
+// this function will be called when request timedout.
+void requestTimedout() {
+  Serial.println(F("Request timedout."));
 }
